@@ -1,0 +1,4 @@
+langchain-azure-ai[hosting]>=1.2.9
+langchain-openai
+azure-ai-projects>=2.3.0
+azure-identity

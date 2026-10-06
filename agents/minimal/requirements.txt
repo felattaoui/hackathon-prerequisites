@@ -1,0 +1,6 @@
+# agent-framework-foundry-hosting is prerelease (per Learn); --pre lets the remote build resolve it.
+--pre
+agent-framework
+agent-framework-foundry-hosting
+azure-ai-agentserver-core
+azure-identity

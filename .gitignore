@@ -1,0 +1,73 @@
+# ---------------------------------------------------------------------------
+# Secrets and local environment
+# ---------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+*.local.*
+config/forbidden_terms.local.txt
+# keys, certificates, credentials (e.g. temporary SSH keys for tunnels)
+*.key
+*.pem
+*.pfx
+*.p12
+id_rsa*
+id_ed25519*
+*.publishsettings
+
+# Local Python / tool environments
+.conda/
+.venv/
+venv/
+env/
+.azure/
+node_modules/
+
+# ---------------------------------------------------------------------------
+# Confidential inputs and customer material: never versioned
+# ---------------------------------------------------------------------------
+# Confidential source documents (never copied into deliverables)
+inputs/
+# Customer-facing deliverables (contain the customer name)
+deliverables/
+*.pptx
+*.pdf
+
+# ---------------------------------------------------------------------------
+# Run outputs (may contain environment details even after redaction)
+# ---------------------------------------------------------------------------
+results/
+*.log
+
+# ---------------------------------------------------------------------------
+# Claude Code: local session state (session ids, personal settings)
+# ---------------------------------------------------------------------------
+.claude/*.lock
+.claude/settings.local.json
+.claude/worktrees/
+
+# ---------------------------------------------------------------------------
+# Python / Jupyter / build artefacts
+# ---------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+build/
+dist/
+*.zip
+
+# ---------------------------------------------------------------------------
+# Editors and operating systems
+# ---------------------------------------------------------------------------
+.vs/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini

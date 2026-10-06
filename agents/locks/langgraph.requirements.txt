@@ -1,0 +1,13 @@
+# Lock for agents/langgraph, resolved locally on 2026-10-02 and validated with /readiness=200.
+# The agent prints HAPQ_VERSIONS at startup so the versions actually installed by the platform are visible in logs.
+langchain-azure-ai[hosting]==1.2.10
+langchain==1.4.2
+langchain-core==1.6.5
+langgraph==1.2.12
+langchain-openai==1.6.6
+azure-ai-agentserver-responses==2.3.0b2
+azure-ai-agentserver-core==2.2.0
+azure-ai-projects==2.7.0
+azure-identity==1.26.0
+azure-core==1.41.0
+openai==3.19.2

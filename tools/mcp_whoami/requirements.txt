@@ -1,0 +1,6 @@
+mcp>=1.9,<2
+pyjwt[crypto]>=2.9
+uvicorn>=0.30
+httpx>=0.28
+azure-identity>=1.25
+aiohttp>=3.9

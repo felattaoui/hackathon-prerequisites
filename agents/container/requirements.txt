@@ -1,0 +1,14 @@
+# Reference lock for agents/minimal (first successful Azure trial, agent hapq-min v2, 2026-10-01).
+# Resolved locally from agents/minimal/requirements.txt minutes after the remote build and validated with
+# /readiness=200. The platform does not expose the versions it installed for v2.
+--pre
+agent-framework==1.19.0
+agent-framework-core==1.19.0
+agent-framework-foundry==1.13.1
+agent-framework-foundry-hosting==1.0.0b260918
+azure-ai-agentserver-core==2.2.0
+azure-ai-agentserver-responses==2.3.0b2
+azure-ai-projects==2.6.1
+azure-identity==1.26.0
+azure-core==1.41.0
+openai==3.19.2

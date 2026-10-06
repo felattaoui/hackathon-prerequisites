@@ -1,0 +1,368 @@
+# Re-executable documentary checks against public Microsoft Learn pages.
+# A documentary result says what the documentation states on the fetch date. It is never a
+# demonstration on Azure.
+#
+# Each probe fetches `url`, optionally narrows the text to [section_start, section_end), then
+# evaluates ONE of:
+#   contains  = "phrase"            (case/whitespace-insensitive substring)
+#   any_of    = ["a", "b"]          (true if any phrase is present)
+#   list_item = "West Europe"       (true if a list item equals the value exactly)
+# and compares the outcome with `expect` (default true).
+# All probes meet expectation -> status `if_met`; otherwise -> `if_unmet`.
+# A fetch failure -> BLOCKED (the source could not be read).
+#
+# polarity: support | limitation | contradiction | absence (how the matrix renders it).
+# For `contradiction`, the probes look for both conflicting statements: "met" means the
+# contradiction is still present in the docs. Contradictions are reported, never resolved here.
+
+[[doc]]
+id = "DOC-C01-GA-STATEMENT"
+criterion = "C01"
+polarity = "support"
+title = "Docs state Foundry Hosted Agents is generally available"
+if_met = "PASS"
+if_unmet = "FAIL"
+[[doc.probe]]
+url = "https://learn.microsoft.com/en-us/agent-framework/hosting/foundry-hosted-agent"
+contains = "Hosted Agents is generally available"
+
+[[doc]]
+id = "DOC-C01-NO-PREVIEW-HEADER"
+criterion = "C01"
+polarity = "support"
+title = "Docs state the preview feature header is no longer required on the GA v1 API"
+if_met = "PASS"
+if_unmet = "FAIL"
+[[doc.probe]]
+url = "https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/migrate-hosted-agent-preview"
+contains = "no longer required"
+
+[[doc]]
+id = "DOC-C01-PREVIEW-WORDING"
+criterion = "C01"
+polarity = "contradiction"
+title = "Some pages still describe hosted agents as preview"
+note = "Residual 'preview' wording next to GA statements. Reported, not resolved."
+if_met = "NOT_TESTED"
+if_unmet = "PASS"
+[[doc.probe]]
+url = "https://learn.microsoft.com/en-us/azure/foundry/how-to/configure-private-link"
+any_of = ["hosted (preview) agents", "hosted agents (preview)"]
+
+[[doc]]
+id = "DOC-C02-PNA-ALL-PROTOCOLS"
+criterion = "C02.a"
+polarity = "support"
+title = "Docs state disabled public network access applies to all protocols (REST and WebSocket)"
+if_met = "PASS"
+if_unmet = "FAIL"
+[[doc.probe]]
+url = "https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/virtual-networks"
+contains = "These rules apply to all protocols, including REST and WebSocket"
+
+[[doc]]
+id = "DOC-C02-PORTAL-ACCESS-PATH"
+criterion = "C02.b"
+polarity = "limitation"
+title = "Docs require a private path (VPN, ExpressRoute or Bastion jump box) to use a network-isolated Foundry"
+if_met = "PASS"
+if_unmet = "FAIL"
+[[doc.probe]]
+url = "https://learn.microsoft.com/en-us/azure/foundry/how-to/configure-private-link"
+contains = "Azure Bastion"
+[[doc.probe]]
+url = "https://learn.microsoft.com/en-us/azure/foundry/how-to/configure-private-link"
+contains = "ExpressRoute"
+
+[[doc]]
+id = "DOC-C02-ENDPOINT-PRIVACY"
+criterion = "C02.c"
+polarity = "contradiction"
+title = "Hosted agent endpoint privacy: 'stays publicly addressable' (azd pivot) vs 'applies to all protocols' (templates pivot)"
+note = "Only a lab test with a valid token from the public internet can settle this (S20-PUBLIC-DENIED-WITH-TOKEN)."
+if_met = "NOT_TESTED"
+if_unmet = "NOT_TESTED"
+[[doc.probe]]
+url = "https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/virtual-networks"
+contains = "stays publicly addressable"
+[[doc.probe]]
+url = "https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/virtual-networks"
+contains = "These rules apply to all protocols"
+
+[[doc]]
+id = "DOC-C02-OUTBOUND-VNET"
+criterion = "C02.d"
+polarity = "support"
+title = "Docs state hosted agents can use a customer VNet for outbound traffic to private resources"
+if_met = "PASS"
+if_unmet = "FAIL"
+[[doc.probe]]
+url = "https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/hosted-agents"
+contains = "customer-provided Azure Virtual Network for outbound traffic"
+
+[[doc]]
+id = "DOC-C02-TELEMETRY-AMPLS"
+criterion = "C02.d"
+polarity = "support"
+title = "Docs describe private telemetry ingestion through an Azure Monitor Private Link Scope"
+if_met = "PASS"
+if_unmet = "FAIL"
+[[doc.probe]]
+url = "https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/virtual-networks"
+contains = "Azure Monitor Private Link Scope"
+
+[[doc]]
+id = "DOC-C02-CLASSA"
+criterion = "C02.e"
+polarity = "support"
+title = "Docs state every Agent Service region supports private Class A (10.0.0.0/8)"
+if_met = "PASS"
+if_unmet = "FAIL"
+[[doc.probe]]
+url = "https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/virtual-networks"
+contains = "supports private Class A address space"
+
+[[doc]]
+id = "DOC-C02-CLASSA-ERRMSG"
+criterion = "C02.e"
+polarity = "contradiction"
+title = "Documented error message mentions only 172/192 ranges"
+note = "The troubleshooting error text conflicts with Class A support; may be a stale message."
+if_met = "NOT_TESTED"
+if_unmet = "PASS"
+[[doc.probe]]
+url = "https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/virtual-networks"
+contains = "in the range of 172 or 192"
+
+[[doc]]
+id = "DOC-C02-CGNAT"
+criterion = "C02.e"
+polarity = "contradiction"
+title = "CGNAT 100.64.0.0/10: allowed (virtual-networks) vs not supported (networking deep dive)"
+note = "Outside the checklist scope; recorded because it affects address planning."
+if_met = "NOT_TESTED"
+if_unmet = "NOT_TESTED"
+[[doc.probe]]
+url = "https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/virtual-networks"
+contains = "RFC 6598 (CGNAT)"
+[[doc.probe]]
+url = "https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/agents-networking-deep-dive"
+contains = "aren't supported and cause routing failures"
+
+[[doc]]
+id = "DOC-C02-PRIVATE-ACR"
+criterion = "C02.f"
+polarity = "support"
+title = "Docs state projects created after 2026-06-25 support a network-secured ACR for hosted agents"
+note = "Condition on project creation date: older projects need a publicly reachable registry."
+if_met = "PASS"
+if_unmet = "FAIL"
+[[doc.probe]]
+url = "https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/hosted-agents"
+contains = "created after June 25, 2026 support a private"
+
+[[doc]]
+id = "DOC-C02-3P-REGISTRY"
+criterion = "C02.f"
+polarity = "support"
+title = "Docs describe bring-your-own (non-ACR) registry connections for hosted agents"
+if_met = "PASS"
+if_unmet = "FAIL"
+[[doc.probe]]
+url = "https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/private-registry-connections"
+contains = "JFrog Artifactory"
+
+[[doc]]
+id = "DOC-C03-A2A-HOSTED"
+criterion = "C03"
+polarity = "contradiction"
+title = "A2A endpoint listed for hosted agents, but the enable-A2A page names only prompt agents as supported"
+note = "Do not infer hosted-agent support from prompt agents. Settled only by S03-A2A-CARD."
+if_met = "NOT_TESTED"
+if_unmet = "NOT_TESTED"
+[[doc.probe]]
+url = "https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/hosted-agents"
+contains = "protocols/a2a"
+[[doc.probe]]
+url = "https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/enable-agent-to-agent-endpoint"
+section_start = "Supported agent types"
+section_end = "Prerequisites"
+contains = "hosted"
+expect = false
+
+[[doc]]
+id = "DOC-C04-INBOUND-NON-ENTRA"
+criterion = "C04.a"
+polarity = "absence"
+title = "A non-Entra identity provider is documented for inbound callers of an agent endpoint"
+note = "Documented inbound schemes are Entra, BotServiceRbac and BotServiceTenant. Absence of documentation is not proof of non-support."
+if_met = "PASS"
+if_unmet = "NOT_TESTED"
+[[doc.probe]]
+url = "https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/configure-agent"
+any_of = ["OpenID Connect", "OIDC", "Okta", "Auth0", "external identity provider"]
+
+[[doc]]
+id = "DOC-C04-TOOL-CUSTOM-OAUTH"
+criterion = "C04.a"
+polarity = "support"
+title = "Docs describe custom OAuth for non-Microsoft OAuth-compliant tool servers"
+if_met = "PASS"
+if_unmet = "FAIL"
+[[doc.probe]]
+url = "https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/mcp-authentication"
+contains = "custom OAuth"
+[[doc.probe]]
+url = "https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/mcp-authentication"
+contains = "non-Microsoft"
+
+[[doc]]
+id = "DOC-C04-CROSS-TENANT"
+criterion = "C04.a"
+polarity = "limitation"
+title = "Docs state cross-tenant token exchange isn't supported for OAuth identity passthrough"
+if_met = "PASS"
+if_unmet = "FAIL"
+[[doc.probe]]
+url = "https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/mcp-authentication"
+contains = "Cross-tenant token exchange isn't supported"
+
+[[doc]]
+id = "DOC-C04-AGENT-IDENTITY-TOOLS"
+criterion = "C04.b"
+polarity = "support"
+title = "Docs describe agent-identity authentication (AgenticIdentityToken) for MCP and A2A tool connections"
+if_met = "PASS"
+if_unmet = "FAIL"
+[[doc.probe]]
+url = "https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/agent-identity"
+contains = "AgenticIdentityToken"
+
+[[doc]]
+id = "DOC-C04-CALL-ID"
+criterion = "C04.b"
+polarity = "support"
+title = "Docs describe forwarding x-agent-foundry-call-id so downstream Foundry services resolve the caller"
+if_met = "PASS"
+if_unmet = "FAIL"
+[[doc.probe]]
+url = "https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/tools/tool-authentication"
+contains = "x-agent-foundry-call-id"
+
+[[doc]]
+id = "DOC-C05-WESTEUROPE"
+criterion = "C05.a"
+polarity = "support"
+title = "West Europe listed in hosted-agent region availability"
+if_met = "PASS"
+if_unmet = "FAIL"
+[[doc.probe]]
+url = "https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/hosted-agents"
+section_start = "Region availability"
+section_end = "This list will be updated"
+list_item = "West Europe"
+
+[[doc]]
+id = "DOC-C05-NORTHEUROPE"
+criterion = "C05.b"
+polarity = "support"
+title = "North Europe listed in hosted-agent region availability"
+if_met = "PASS"
+if_unmet = "FAIL"
+[[doc.probe]]
+url = "https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/hosted-agents"
+section_start = "Region availability"
+section_end = "This list will be updated"
+list_item = "North Europe"
+
+[[doc]]
+id = "DOC-C05-NORTHEUROPE-PRIVATE-VNET"
+criterion = "C05.b"
+polarity = "support"
+title = "North Europe listed in the Agent Service regional support table"
+if_met = "PASS"
+if_unmet = "FAIL"
+[[doc.probe]]
+url = "https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/limits-quotas-regions"
+contains = "North Europe"
+
+[[doc]]
+id = "DOC-C05-EASTUS2"
+criterion = "C05.c"
+polarity = "support"
+title = "East US 2 listed in hosted-agent region availability"
+if_met = "PASS"
+if_unmet = "FAIL"
+[[doc.probe]]
+url = "https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/hosted-agents"
+section_start = "Region availability"
+section_end = "This list will be updated"
+list_item = "East US 2"
+
+[[doc]]
+id = "DOC-C05-WESTUS"
+criterion = "C05.d"
+polarity = "support"
+title = "West US listed in hosted-agent region availability"
+if_met = "PASS"
+if_unmet = "FAIL"
+[[doc.probe]]
+url = "https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/hosted-agents"
+section_start = "Region availability"
+section_end = "This list will be updated"
+list_item = "West US"
+
+[[doc]]
+id = "DOC-C06-TOOLBOX-PROJECT-SCOPED"
+criterion = "C06"
+polarity = "limitation"
+title = "Toolbox endpoints are project-scoped (/api/projects/<project>/toolboxes/...)"
+if_met = "PASS"
+if_unmet = "FAIL"
+[[doc.probe]]
+url = "https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/tools/use-toolbox-hosted-agent"
+contains = "/api/projects/<project>/toolboxes/"
+
+[[doc]]
+id = "DOC-C06-CONTROL-PLANE"
+criterion = "C06"
+polarity = "support"
+title = "Docs state the Control Plane lists agents across all projects of a subscription"
+if_met = "PASS"
+if_unmet = "FAIL"
+[[doc.probe]]
+url = "https://learn.microsoft.com/en-us/azure/foundry/control-plane/how-to-manage-agents"
+contains = "across all the projects"
+
+[[doc]]
+id = "DOC-C07-LOGS"
+criterion = "C07"
+polarity = "support"
+title = "Docs describe streaming hosted agent container logs"
+if_met = "PASS"
+if_unmet = "FAIL"
+[[doc.probe]]
+url = "https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/monitor-hosted-agent-logs"
+contains = "azd ai agent monitor"
+
+[[doc]]
+id = "DOC-C07-TRACING"
+criterion = "C07"
+polarity = "support"
+title = "Docs state the platform injects the Application Insights connection string into hosted agents"
+if_met = "PASS"
+if_unmet = "FAIL"
+[[doc.probe]]
+url = "https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/hosted-agents"
+contains = "automatically injects an Application Insights connection string"
+
+[[doc]]
+id = "DOC-C08-LANGGRAPH"
+criterion = "C08"
+polarity = "support"
+title = "Docs describe hosting a LangGraph agent as a hosted agent (langchain-azure-ai)"
+if_met = "PASS"
+if_unmet = "FAIL"
+[[doc.probe]]
+url = "https://learn.microsoft.com/en-us/azure/foundry/how-to/develop/langchain-hosted-agents"
+contains = "langchain-azure-ai"

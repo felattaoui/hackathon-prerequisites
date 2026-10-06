@@ -1,0 +1,51 @@
+# Kit configuration. No secrets and no real identifiers here:
+# the subscription id is read from .env (key AZURE_SUBSCRIPTION_ID) or the environment.
+# Override this file with HAPQ_CONFIG=<path>.
+
+[azure]
+resource_group = "rg-hackathon-prerequisites-eaf"
+# Region of the lab resources. The resource-group region does NOT determine resource regions:
+# every Bicep module receives this value explicitly.
+lab_region = "westeurope"
+# Regions whose documented hosted-agent availability is tracked, independently of the lab region.
+tracked_regions = ["westeurope", "northeurope", "eastus2", "westus"]
+# The region that must be qualified separately (not validated by a lab success elsewhere).
+required_region = "northeurope"
+required_providers = [
+  "Microsoft.CognitiveServices", "Microsoft.App", "Microsoft.ContainerService",
+  "Microsoft.ContainerRegistry", "Microsoft.Network", "Microsoft.Insights",
+  "Microsoft.OperationalInsights", "Microsoft.Storage", "Microsoft.KeyVault",
+]
+kit_tag = { key = "kit", value = "hapq" }
+
+[model]
+name = "gpt-5-mini"
+version = "2025-08-07"
+sku = "DataZoneStandard"
+capacity = 10           # thousands of tokens per minute
+
+[execution]
+# Declared, never inferred: where this process runs. Values: workstation-public | in-vnet-runner
+execution_point = "workstation-public"
+
+[results]
+dir = "results"
+stale_after_days = 7
+
+# Execution limits enforced by the kit (client side). They bound what the kit itself does; they are NOT a
+# billing cap and do not stop resources from accruing cost. Exceeding a limit stops the run with BLOCKED.
+[limits]
+max_agent_versions = 6          # hosted-agent versions the kit may create per run
+max_sessions = 12               # distinct hosted-agent sessions opened per run
+max_calls = 40                  # model/agent/tool calls per run
+max_concurrency = 1             # scenarios run sequentially
+max_output_tokens = 1000        # per agent call; reasoning models (gpt-5-mini) spend ~300 tokens reasoning first
+max_total_tokens = 150000       # input+output tokens reported by responses, per run
+call_timeout_s = 120            # per HTTP call
+deploy_timeout_s = 900          # waiting for a version to become active
+trace_wait_s = 600              # waiting for telemetry to be queryable
+idle_timeout_s = 120            # hosted-agent session idle timeout (platform minimum)
+cpu = "0.5"
+memory = "1Gi"
+max_retries = 2                 # SDK/HTTP retries per call (azure-core and OpenAI clients)
+max_polls = 120                 # status reads while waiting for a version

@@ -1,0 +1,404 @@
+# Single source of truth: checklist criteria -> documentary checks -> execution scenarios.
+#
+# "initial_claim" is what the source checklist asserted. It is NOT evidence.
+# "docs"       : documentary checks (config/doc_assertions.toml). They never qualify a criterion.
+# "preflight"  : read-only subscription checks (environment "subscription").
+# "scenarios"  : execution scenarios. Each has per-environment runs; results are kept per environment
+#                and execution point, never merged. The verdict for the qualification target (B, private)
+#                uses only B results.
+# "qualify_in" : environments allowed to produce a verdict (default A and B).
+# "coverage"   : "full" if passing scenarios answer the criterion; "partial" if even a full PASS leaves part
+#                of the criterion unproven. The limit is printed next to the verdict.
+
+target_environment = "B"
+
+[[criterion]]
+id = "C00"
+title = "Lab prerequisites (not a checklist item)"
+initial_claim = "n/a"
+preflight = ["PF-AUTH", "PF-SUB", "PF-RG", "PF-PROVIDERS", "PF-POLICIES", "PF-ROLES", "PF-TOOLING", "PF-ENTRA-APP-CREATE", "PF-CLEANUP"]
+docs = []
+scenarios = []
+coverage = "full"
+
+[[criterion]]
+id = "C01"
+title = "Hosted agents are GA, no preview enrollment needed"
+initial_claim = "checked"
+docs = ["DOC-C01-GA-STATEMENT", "DOC-C01-NO-PREVIEW-HEADER", "DOC-C01-PREVIEW-WORDING"]
+preflight = ["PF-PREVIEW-FEATURES"]
+scenarios = ["S01-GA-CREATE"]
+coverage = "partial"
+coverage_limit = "Creating an agent on the GA API without preview enrollment is consistent with GA; the GA status itself is a documentary/contractual fact, not provable by execution."
+
+[[criterion]]
+id = "C02.a"
+qualify_in = ["B"]   # network criterion: only the private lab can qualify it
+title = "New Foundry experience works with public network access disabled"
+initial_claim = "checked"
+docs = ["DOC-C02-PNA-ALL-PROTOCOLS"]
+scenarios = ["S20-PUBLIC-DENIED-WITH-TOKEN", "S02-INVOKE"]
+coverage = "partial"
+coverage_limit = "Covers API/SDK use of projects and hosted agents; portal usage is criterion C02.b."
+
+[[criterion]]
+id = "C02.b"
+qualify_in = ["B"]   # network criterion: only the private lab can qualify it
+title = "Chat with models from the portal when public access is disabled"
+initial_claim = "not checked, marked as failing"
+docs = ["DOC-C02-PORTAL-ACCESS-PATH"]
+scenarios = ["MAN-C02-PORTAL-CHAT-INVNET", "MAN-C02-PORTAL-CHAT-PUBLIC"]
+coverage = "full"
+
+[[criterion]]
+id = "C02.c"
+qualify_in = ["B"]   # network criterion: only the private lab can qualify it
+title = "Inbound: hosted agents reachable from private networks (incl. telemetry)"
+initial_claim = "not checked"
+docs = ["DOC-C02-ENDPOINT-PRIVACY"]
+scenarios = ["S21-DNS-PRIVATE", "S02-INVOKE", "S03-A2A-CARD", "S20-PUBLIC-DENIED-WITH-TOKEN", "S24-TELEMETRY-QUERY-PRIVATE"]
+coverage = "full"
+
+[[criterion]]
+id = "C02.d"
+qualify_in = ["B"]   # network criterion: only the private lab can qualify it
+title = "Outbound: hosted agents reach private resources (incl. telemetry)"
+initial_claim = "not checked"
+docs = ["DOC-C02-OUTBOUND-VNET", "DOC-C02-TELEMETRY-AMPLS"]
+scenarios = ["S22-OUTBOUND-PRIVATE-STORAGE", "S07-STD-TOOL-AGENT-IDENTITY", "S23-TELEMETRY-INGEST-PRIVATE"]
+coverage = "full"
+
+[[criterion]]
+id = "C02.e"
+qualify_in = ["B"]   # network criterion: only the private lab can qualify it
+title = "Class A (10.0.0.0/8) subnets supported"
+initial_claim = "not checked, question mark"
+docs = ["DOC-C02-CLASSA", "DOC-C02-CLASSA-ERRMSG", "DOC-C02-CGNAT"]
+scenarios = ["S25-CLASSA-INJECTION"]
+coverage = "full"
+
+[[criterion]]
+id = "C02.f"
+qualify_in = ["B"]   # network criterion: only the private lab can qualify it
+title = "Private Docker registries supported"
+initial_claim = "not checked"
+docs = ["DOC-C02-PRIVATE-ACR", "DOC-C02-3P-REGISTRY"]
+scenarios = ["S26-PRIVATE-ACR-IMAGE", "S26-STD-PRIVATE-ACR-IMAGE", "S27-3P-REGISTRY"]
+coverage = "full"
+
+[[criterion]]
+id = "C03"
+title = "Native A2A exposure for hosted agents"
+initial_claim = "not checked"
+conclusion = "Environment A, westeurope, 2026-10-02: incoming A2A can be enabled on a hosted agent and its v1.0 agent card is served (HTTP 200), but inbound invocation (JSON-RPC SendMessage, A2A-Version 1.0, official a2a-sdk 1.0.2) is refused by the platform: error -32099, reason HOSTED_AGENT_NOT_SUPPORTED. Native A2A exposure of a hosted agent is therefore NOT available in this lab at this date. A prompt agent or proxy would not satisfy this requirement."
+docs = ["DOC-C03-A2A-HOSTED"]
+scenarios = ["S03-A2A-CARD", "S04-A2A-MESSAGE", "S05-A2A-NO-TOKEN-401", "S06-A2A-NO-ROLE-403"]
+coverage = "full"
+
+[[criterion]]
+id = "C04.a"
+title = "Integration with external identity providers"
+initial_claim = "not checked"
+docs = ["DOC-C04-INBOUND-NON-ENTRA", "DOC-C04-TOOL-CUSTOM-OAUTH", "DOC-C04-CROSS-TENANT"]
+scenarios = ["S30-INBOUND-NON-ENTRA", "S31-TOOL-EXTERNAL-IDP"]
+coverage = "full"
+
+[[criterion]]
+id = "C04.b"
+title = "Agent identity propagated to tool calls"
+initial_claim = "not checked"
+docs = ["DOC-C04-AGENT-IDENTITY-TOOLS", "DOC-C04-CALL-ID"]
+scenarios = ["S14-MCP-NO-TOKEN-401", "S15-MCP-WRONG-AUDIENCE-401", "S07-TOOL-AGENT-IDENTITY", "S07-STD-TOOL-AGENT-IDENTITY"]
+coverage = "partial"
+coverage_limit = "Proves the agent's Entra identity reaches a tool. Propagation of the END USER identity (OBO / OAuth passthrough) is not exercised. Private environment: PASS on a Standard-setup project (proj3); on the Basic network-injected setup the Foundry tool paths fail with a DataProxy DNS error (S07 B run 2026-10-02, 0/5 + sample 19 control 0/3), consistent with Learn: private MCP requires Standard setup."
+
+[[criterion]]
+id = "C05.a"
+title = "Hosted agents available in West Europe"
+initial_claim = "checked, marked as passing"
+docs = ["DOC-C05-WESTEUROPE"]
+preflight = ["PF-MODEL-AVAILABLE", "PF-MODEL-QUOTA", "PF-ARM-LOCATIONS"]
+scenarios = ["S01-GA-CREATE"]
+coverage = "full"
+
+[[criterion]]
+id = "C05.b"
+title = "Hosted agents available in North Europe (main EU test region)"
+initial_claim = "checked, marked as failing (not listed)"
+docs = ["DOC-C05-NORTHEUROPE", "DOC-C05-NORTHEUROPE-PRIVATE-VNET"]
+preflight = ["PF-ARM-LOCATIONS-REQUIRED"]
+scenarios = ["NE-NOT-DEPLOYED"]
+coverage = "full"
+
+[[criterion]]
+id = "C05.c"
+title = "Hosted agents available in East US 2"
+initial_claim = "checked, marked as passing"
+docs = ["DOC-C05-EASTUS2"]
+scenarios = []
+coverage = "full"
+
+[[criterion]]
+id = "C05.d"
+title = "Hosted agents available in West US"
+initial_claim = "checked, marked as passing"
+docs = ["DOC-C05-WESTUS"]
+scenarios = []
+coverage = "full"
+
+[[criterion]]
+id = "C06"
+title = "Enterprise-wide registry of tools / agents (cross projects)"
+initial_claim = "not checked"
+docs = ["DOC-C06-TOOLBOX-PROJECT-SCOPED", "DOC-C06-CONTROL-PLANE"]
+scenarios = ["S12-XPROJECT-TOOL", "S12-XPROJECT-TOOL-RBAC", "S13-AGENT-INVENTORY", "MAN-C06-CONTROL-PLANE"]
+coverage = "partial"
+coverage_limit = "Only cross-project tool consumption and agent inventory inside ONE subscription are exercised. Tenant-wide registries (Agent 365 registry, API Center private tool/skill catalogs), governance, approval workflows and cross-subscription discovery are not covered."
+
+[[criterion]]
+id = "C07"
+title = "Observability of hosted agent deployment"
+initial_claim = "not checked"
+docs = ["DOC-C07-LOGS", "DOC-C07-TRACING"]
+scenarios = ["S09-OBS-STATUS", "S10-OBS-LOGS", "S11-OBS-TRACES", "S23-TELEMETRY-INGEST-PRIVATE"]
+coverage = "full"
+
+[[criterion]]
+id = "C08"
+title = "LangGraph integration in a hosted agent"
+initial_claim = "not checked"
+docs = ["DOC-C08-LANGGRAPH"]
+scenarios = ["S08-LANGGRAPH"]
+coverage = "full"
+
+# ---------------------------------------------------------------------------
+# Scenarios. runs = list of "<environment>@<execution point>".
+# implemented: runs whose code exists in this repository. Others show NOT_TESTED ("not implemented").
+# blocked_by: an access or identity that is missing; such runs show BLOCKED.
+
+[[scenario]]
+id = "S01-GA-CREATE"
+runs = ["A@workstation-public", "B@in-vnet-runner"]
+implemented = ["A@workstation-public", "B@in-vnet-runner"]
+pass_if = "A source-code hosted-agent version created through azure-ai-projects>=2.3 on the v1 API, without preview header, reaches status 'active' in westeurope within the deploy timeout."
+fail_if = "Status 'failed', or creation refused with an error that mentions preview/feature registration."
+
+[[scenario]]
+id = "S02-INVOKE"
+runs = ["A@workstation-public", "B@in-vnet-runner"]
+implemented = ["A@workstation-public", "B@in-vnet-runner"]
+pass_if = "A Responses call to the hosted agent returns HTTP 200 and a non-empty answer containing the nonce sent in the prompt."
+fail_if = "Any non-200 answer, or an answer without the nonce."
+
+[[scenario]]
+id = "S03-A2A-CARD"
+runs = ["A@workstation-public", "B@in-vnet-runner"]
+implemented = ["A@workstation-public", "B@in-vnet-runner"]
+pass_if = "After enabling a2a on the HOSTED agent, GET .../protocols/a2a/agentCard/v1.0 with an Entra token returns 200 and protocolVersion '1.0'."
+fail_if = "Enabling is rejected for a hosted agent, or the card request returns a non-200."
+
+[[scenario]]
+id = "S04-A2A-MESSAGE"
+runs = ["A@workstation-public", "B@in-vnet-runner"]
+implemented = ["A@workstation-public"]
+pass_if = "A JSON-RPC SendMessage (A2A-Version 1.0) returns a result whose text contains the nonce."
+fail_if = "JSON-RPC error or no text containing the nonce."
+
+[[scenario]]
+id = "S05-A2A-NO-TOKEN-401"
+runs = ["A@workstation-public", "B@in-vnet-runner"]
+implemented = ["A@workstation-public"]
+pass_if = "Agent-card request without Authorization header returns 401. This proves authentication is enforced, nothing about network policy."
+fail_if = "Any 2xx answer."
+
+[[scenario]]
+id = "S06-A2A-NO-ROLE-403"
+runs = ["A@workstation-public", "B@in-vnet-runner"]
+implemented = ["A@workstation-public"]
+pass_if = "A valid Entra token of an identity WITHOUT any Foundry role (the MCP tool's managed identity, via the tool's authenticated probe) gets 403 on the agent card."
+fail_if = "2xx answer (authorization not enforced)."
+
+[[scenario]]
+id = "S07-TOOL-AGENT-IDENTITY"
+runs = ["A@workstation-public"]   # B: see S07-STD (Standard setup, the documented prerequisite for private MCP); the B run on the Basic setup (FAIL, DataProxy DNS) is kept in results and stated in the C04.b coverage limit
+implemented = ["A@workstation-public"]
+pass_if = "The MCP tool records a call carrying the nonce, with a token it validated (signature, issuer, audience = kit app) whose oid EQUALS the principal id of the hosted agent's own identity as reported by the platform. A missing oid, or an unavailable expected identity, never gives PASS."
+fail_if = "No call recorded, token without oid, or principal different from the agent identity."
+
+[[scenario]]
+id = "S08-LANGGRAPH"
+runs = ["A@workstation-public", "B@in-vnet-runner"]
+implemented = ["A@workstation-public", "B@in-vnet-runner"]
+pass_if = "A LangGraph graph hosted via langchain-azure-ai[hosting] reaches 'active' and answers a Responses call containing the nonce."
+fail_if = "Version 'failed' or answer without the nonce."
+
+[[scenario]]
+id = "S09-OBS-STATUS"
+runs = ["A@workstation-public", "B@in-vnet-runner"]
+implemented = ["A@workstation-public", "B@in-vnet-runner"]
+pass_if = "Version status is readable through the SDK at each poll and the final status is 'active' or 'failed' with an error object."
+fail_if = "Status unreadable."
+
+[[scenario]]
+id = "S10-OBS-LOGS"
+runs = ["A@workstation-public", "B@in-vnet-runner"]
+implemented = ["A@workstation-public", "B@in-vnet-runner"]
+pass_if = "The session log stream returns at least one line within 60 s for a session created by S02."
+fail_if = "Log endpoint error or no line within the timeout."
+
+[[scenario]]
+id = "S11-OBS-TRACES"
+runs = ["A@workstation-public"]   # in B the same measure is S23-TELEMETRY-INGEST-PRIVATE (correlated rows, from the VNet)
+implemented = ["A@workstation-public"]
+pass_if = "An Application Insights query returns at least one request/dependency row emitted by the agent within 10 minutes of S02."
+fail_if = "No row after the wait limit."
+
+[[scenario]]
+id = "S12-XPROJECT-TOOL"
+runs = ["A@workstation-public", "B@in-vnet-runner"]
+implemented = ["A@workstation-public"]
+pass_if = "Need: a tool exposed by project 1's toolbox is consumable from a hosted agent of project 2. PASS when the MCP tool records the call from the project-2 agent. Evidence is technical only (tool-side record, HTTP refusals in container logs); model text is never used. The documentary hypothesis (project-scoped, refusal expected) and whether the observation matches it are recorded separately."
+fail_if = "A technical refusal (401/403 from the toolbox in the container logs) and no call recorded: the need is not met by toolbox sharing. Anything else is NOT_TESTED (inconclusive)."
+
+[[scenario]]
+id = "S13-AGENT-INVENTORY"
+runs = ["A@workstation-public", "B@in-vnet-runner"]
+implemented = ["A@workstation-public"]
+pass_if = "Agents of both projects are enumerated by the kit with project attribution, by iterating projects of the account (N data-plane calls). This shows an inventory can be BUILT, not that a registry exists."
+fail_if = "Enumeration fails for a project the caller can read."
+
+[[scenario]]
+id = "S14-MCP-NO-TOKEN-401"
+runs = ["A@workstation-public", "B@in-vnet-runner"]
+implemented = ["A@workstation-public", "B@in-vnet-runner"]
+pass_if = "The MCP tool rejects a request without token with 401 (the identity check is not a no-op)."
+fail_if = "Any 2xx."
+
+[[scenario]]
+id = "S15-MCP-WRONG-AUDIENCE-401"
+runs = ["A@workstation-public", "B@in-vnet-runner"]
+implemented = ["A@workstation-public", "B@in-vnet-runner"]
+pass_if = "The MCP tool rejects a valid Entra token issued for another audience (https://ai.azure.com) with 401."
+fail_if = "Any 2xx."
+
+[[scenario]]
+id = "S20-PUBLIC-DENIED-WITH-TOKEN"
+runs = ["B@workstation-public"]
+implemented = ["B@workstation-public"]
+pass_if = "From the public internet, a VALID token with Foundry User gets 403 with a network/firewall error code on project and agent endpoints."
+fail_if = "2xx (endpoint publicly reachable) — or 401, which is not a network refusal (inconclusive -> FAIL of the test design)."
+
+[[scenario]]
+id = "S21-DNS-PRIVATE"
+runs = ["B@in-vnet-runner"]
+implemented = ["B@in-vnet-runner"]
+pass_if = "<account>.services.ai.azure.com resolves to an address inside the lab VNet (10.42.0.0/16) from the runner."
+fail_if = "Public address."
+
+[[scenario]]
+id = "S22-OUTBOUND-PRIVATE-STORAGE"
+runs = ["B@in-vnet-runner"]
+implemented = ["B@in-vnet-runner"]
+pass_if = "The hosted agent reads a synthetic blob (nonce) from a storage account with public access disabled; the same read from the workstation is refused."
+fail_if = "Agent cannot read the blob."
+
+[[scenario]]
+id = "S23-TELEMETRY-INGEST-PRIVATE"
+runs = ["B@in-vnet-runner"]
+implemented = ["B@in-vnet-runner"]
+pass_if = "Telemetry from the hosted agent appears in Application Insights whose ingestion is PrivateOnly through AMPLS (publicNetworkAccessForIngestion=Disabled)."
+fail_if = "No telemetry after the wait limit."
+
+[[scenario]]
+id = "S24-TELEMETRY-QUERY-PRIVATE"
+runs = ["B@in-vnet-runner", "B@workstation-public"]
+implemented = ["B@in-vnet-runner", "B@workstation-public"]
+pass_if = "With telemetryQueryAccess=PrivateOnly (Bicep default): a telemetry query succeeds from the runner AND the same query from the workstation is refused. If the lab is deployed with query access Open, consultation is public by configuration: NOT_TESTED, never PASS."
+fail_if = "Query succeeds from the public internet while PrivateOnly is configured."
+
+[[scenario]]
+id = "S25-CLASSA-INJECTION"
+runs = ["B@workstation-public"]
+implemented = ["B@workstation-public"]
+pass_if = "The network-injected account in a 10.42.0.0/24 delegated subnet provisions, and S01 succeeds in B."
+fail_if = "Deployment rejects the subnet range."
+
+[[scenario]]
+id = "S26-PRIVATE-ACR-IMAGE"
+runs = ["B@in-vnet-runner"]
+implemented = ["B@in-vnet-runner"]
+pass_if = "A hosted-agent version created from an image in an ACR with public access disabled reaches 'active'."
+fail_if = "Version 'failed' with an image pull error."
+
+[[scenario]]
+id = "S27-3P-REGISTRY"
+runs = ["B@in-vnet-runner"]
+implemented = []
+blocked_by = "A third-party private registry exposed through Private Link is required."
+pass_if = "A hosted agent pulls from a non-Azure private registry through a registry connection."
+fail_if = "Pull refused."
+
+[[scenario]]
+id = "S30-INBOUND-NON-ENTRA"
+runs = ["A@workstation-public"]
+implemented = ["A@workstation-public"]
+pass_if = "A bearer token from a non-Entra issuer (synthetic, self-signed) is refused (401 or 403) by the hosted agent endpoint. This confirms the documented Entra-only inbound limitation; it is not an integration with a real third-party IdP."
+fail_if = "The foreign-issuer token is accepted."
+
+[[scenario]]
+id = "S31-TOOL-EXTERNAL-IDP"
+runs = ["A@workstation-public", "B@in-vnet-runner"]
+implemented = []
+blocked_by = "A third-party OAuth/OIDC provider tenant with an app registration is required."
+pass_if = "An MCP tool connection using custom OAuth against a non-Microsoft IdP completes consent and the tool receives the user's token."
+fail_if = "Consent or token exchange fails."
+
+[[scenario]]
+id = "MAN-C02-PORTAL-CHAT-INVNET"
+runs = ["B@browser-inside-vnet"]
+implemented = ["B@browser-inside-vnet"]
+blocked_by = "A browser inside the lab network (VPN, ExpressRoute or Bastion jump box) is required."
+pass_if = "Playground chat returns a model answer while DNS resolves the account privately."
+fail_if = "Playground error."
+
+[[scenario]]
+id = "MAN-C02-PORTAL-CHAT-PUBLIC"
+runs = ["B@workstation-public"]
+implemented = ["B@workstation-public"]
+pass_if = "Playground refused from the public internet (error recorded)."
+fail_if = "Playground works from the public internet."
+
+[[scenario]]
+id = "MAN-C06-CONTROL-PLANE"
+runs = ["A@workstation-public", "B@in-vnet-runner"]
+implemented = ["A@workstation-public"]
+pass_if = "The Control Plane (Operate, preview) lists hosted agents of both projects in one view."
+fail_if = "Agents of one project missing."
+
+[[scenario]]
+id = "NE-NOT-DEPLOYED"
+runs = []
+implemented = []
+pass_if = "Never executed by design: no deployment in North Europe only to probe availability. A lab success in westeurope does not validate North Europe."
+fail_if = "-"
+
+[[scenario]]
+id = "S07-STD-TOOL-AGENT-IDENTITY"
+runs = ["B@in-vnet-runner"]
+implemented = ["B@in-vnet-runner"]
+pass_if = "Same as S07-TOOL-AGENT-IDENTITY, on proj3 created in Standard agent setup (BYO Cosmos DB, AI Search, Storage; project capability host), the setup Learn requires for private MCP. The private MCP tool records the call and the token oid equals the agent instance identity."
+fail_if = "No call recorded, or principal different from the agent identity. The DataProxy DNS error of the Basic setup is reported verbatim."
+
+[[scenario]]
+id = "S12-XPROJECT-TOOL-RBAC"
+runs = ["A@workstation-public"]
+implemented = ["A@workstation-public"]
+pass_if = "Variant of S12 with Foundry User granted to the project-2 agent identity on project 1 only: the tool of project 1's toolbox records the call from the project-2 agent (oid = that agent's identity)."
+fail_if = "The toolbox still refuses part of the MCP exchange (status sequence recorded); no tool call recorded."
+
+[[scenario]]
+id = "S26-STD-PRIVATE-ACR-IMAGE"
+runs = ["B@in-vnet-runner"]
+implemented = ["B@in-vnet-runner"]
+pass_if = "On proj3 (Standard setup), a hosted agent version created from an image in the private ACR (public access disabled, no trusted-services bypass) becomes active and answers."
+fail_if = "Version failed; the platform error is recorded verbatim."
