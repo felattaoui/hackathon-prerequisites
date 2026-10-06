@@ -7,6 +7,7 @@ name = "hapq"
 version = "0.1.0"
 description = "Hosted-agent prerequisite qualification kit for Microsoft Foundry"
 requires-python = ">=3.11"
+license = { text = "MIT" }
 dependencies = []
 
 [project.optional-dependencies]
