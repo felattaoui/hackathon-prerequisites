@@ -40,8 +40,10 @@ def deliverables(root):
 
 
 def test_gitignore_excludes_sensitive_paths(repo_root):
-    ignore = (repo_root / ".gitignore").read_text().splitlines()
-    for entry in (".env", "inputs/", "results/", ".conda/", "config/forbidden_terms.local.txt"):
+    # the kit lives in a sub-folder of the git repository: use the .gitignore of the repository root
+    root = next(p for p in (repo_root, *repo_root.parents) if (p / ".gitignore").exists())
+    ignore = (root / ".gitignore").read_text().splitlines()
+    for entry in (".env", "inputs/", "results/", ".conda/", "*.local.*", "deliverables/"):
         assert entry in ignore
 
 

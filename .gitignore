@@ -5,7 +5,7 @@
 .env.*
 !.env.example
 *.local.*
-config/forbidden_terms.local.txt
+**/config/forbidden_terms.local.txt
 # keys, certificates, credentials (e.g. temporary SSH keys for tunnels)
 *.key
 *.pem
