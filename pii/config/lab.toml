@@ -1,0 +1,4 @@
+# Lab configuration (no secrets). The subscription id lives only in the git-ignored .env file.
+[azure]
+resource_group = "rg-hackathon-prerequisites-pii-eaf"
+region = "westeurope"
